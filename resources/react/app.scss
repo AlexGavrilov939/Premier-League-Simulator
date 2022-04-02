@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'colors';
+@import 'tailwind.customizations';
+
+html, body, #app, #app > div {
+  min-height: 100%;
+  overflow: auto;
+  height: -webkit-fill-available;
+}
+
+body, #app, #app > div {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}

@@ -1,0 +1,88 @@
+@import "colors";
+
+.bg-green-50,
+.hover\:bg-green-50{
+    //background-color: #d8efcc;
+    background-color: rgba(216, 239, 204, var(--tw-bg-opacity));
+}
+.bg-green-100,
+.hover\:bg-green-100:hover,
+.focus\:bg-green-100:focus {
+    background-color: #cfeebf;
+    //background-color: rgba(216, 239, 204, var(--tw-bg-opacity));
+}
+.bg-green-300,
+.hover\:bg-green-300:hover {
+    //background-color: #82ac6a;
+    background-color: rgba(130, 172, 106, var(--tw-bg-opacity));
+}
+.bg-green-400,
+.hover\:bg-green-400:hover {
+    //background-color: #648b4d;
+    background-color: rgba(100, 139, 77, var(--tw-bg-opacity));
+}
+.bg-green-500,
+.hover\:bg-green-500:hover{
+    //background-color: #50713d;
+    background-color: rgba(80, 113, 61, var(--tw-bg-opacity));
+}
+
+.ring-green-300,
+.focus\:ring-green-300:focus {
+    --tw-ring-opacity: 1;
+    //--tw-ring-color: #82ac6a;
+    --tw-ring-color: rgba(130, 172, 106, var(--tw-ring-opacity));
+}
+
+.focus\:ring-opacity-50:focus {
+    --tw-ring-opacity: 0.5;
+}
+.border-green-300,
+.focus\:border-green-300:focus,
+.hover\:border-green-300:hover{
+    border-color: rgba(130, 172, 106, var(--tw-border-opacity));
+}
+.border-green-400,
+.focus\:border-green-400:focus,
+.hover\:border-green-400:hover{
+    border-color: rgba(100, 139, 77, var(--tw-border-opacity));
+}
+.border-green-500,
+.focus\:border-green-500:focus,
+.hover\:border-green-500:hover{
+    border-color: rgba(80, 113, 61, var(--tw-border-opacity));
+}
+.text-green-400,
+.hover\:text-green-400:hover {
+    --tw-text-opacity: 1;
+    //color: #648b4d;
+    color: rgba(100, 139, 77, var(--tw-text-opacity));
+}
+.text-green-500,
+.hover\:text-green-500:hover {
+    --tw-text-opacity: 1;
+    //color: #648b4d;
+    color: rgba(80, 113, 61, var(--tw-text-opacity));
+}
+.text-green-800,
+.hover\:text-green-800:hover,
+.focus\:text-green-800:focus{
+    --tw-text-opacity: 1;
+    color: #415e2f;
+    color: rgba(65, 94, 47, var(--tw-text-opacity));
+}
+
+
+@media (min-width: 640px) {
+    .sm\:inline-table {
+        display: inline-table;
+
+        //& > thead tr:not(:first-child) {
+        //    display: none;
+        //}
+    }
+}
+.divide-green-500 > :not([hidden]) ~ :not([hidden]) {
+    border-right-color: rgba(80, 113, 61, var(--tw-divide-opacity));
+    border-left-color: rgba(80, 113, 61, var(--tw-divide-opacity));
+}

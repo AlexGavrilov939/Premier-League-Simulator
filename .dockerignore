@@ -1,0 +1,7 @@
+container
+.git
+.gitignore
+.idea
+node_modules
+vendor
+storage
