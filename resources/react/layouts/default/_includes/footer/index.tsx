@@ -12,7 +12,7 @@ const githubLink = 'https://github.com/AlexGavrilov939';
 const Footer: React.FC<FooterType> = ({ classNames }) => (
   <>
     <footer className={cx(
-        'max-w-7xl mx-auto mt-1 sm:mt-2 lg:mt-3 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-wrap sm:flex-row',
+        'max-w-7xl mx-auto mt-8 sm:mt-4 lg:mt-3 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-wrap sm:flex-row',
         'flex-col-reverse items-center justify-between w-full', classNames,
     )}>
       <div className="flex items-center divide-x-2 divide-solid divide-opacity-30 divide-white">
