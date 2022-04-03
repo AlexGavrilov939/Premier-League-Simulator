@@ -1,0 +1,81 @@
+version: "3.8"
+
+networks:
+    icl:
+
+volumes:
+    app:
+    appStorage:
+    redisStorage:
+    sockets:
+
+services:
+    app:
+        image: ${REGISTRY}/icl-app:${IMAGE_TAG}
+        restart: unless-stopped
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - "80:80"
+            - "443:443"
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        volumes:
+            - app:/app
+            - appStorage:/storage
+            - sockets:/var/run/sockets:ro
+            - /etc/zerossl:/etc/zerossl:ro
+            - /var/www/html:/var/www/html:ro
+            - /etc/hostname:/etc/hostname:ro
+            - /var/log/icl:/var/log/icl
+        networks:
+            - icl
+        depends_on:
+            - app-source
+            - services-php-fpm
+            - services-mysql
+
+    app-source:
+        image: ${REGISTRY}/icl-app-source:${IMAGE_TAG}
+        volumes:
+            - app:/app
+            - appStorage:/storage
+            - /var/log/icl:/var/log/icl
+        networks:
+            - icl
+
+    services-php-fpm:
+        image: ${REGISTRY}/icl-service-php-fpm:${IMAGE_TAG}
+        restart: unless-stopped
+        volumes:
+            - app:/app
+            - appStorage:/storage
+            - sockets:/var/run/sockets:rw
+            - /etc/hostname:/etc/hostname:ro
+            - /var/log/icl:/var/log/icl
+        networks:
+            - icl
+        depends_on:
+            - app-source
+            - services-mysql
+
+    services-mysql:
+        image: mysql:5.7.34
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - ./storage/app/docker/db/mysql:/var/lib/mysql
+            - ./storage/app/docker/logs:/var/log/icl
+        networks:
+            - icl
+

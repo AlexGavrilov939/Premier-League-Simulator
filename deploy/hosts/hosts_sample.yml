@@ -1,0 +1,12 @@
+all:
+  children:
+    icl:
+      hosts:
+        icl.remote:
+          ansible_host:
+          extra_ips:
+            - ip1
+            - ip2
+          zerossl_domains:
+            - domain1
+            - domain2

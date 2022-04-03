@@ -1,0 +1,8 @@
+all:
+  children:
+    icl:
+      hosts:
+        icl.prod:
+          ansible_host: icl.prod
+          zerossl_domains:
+            - 188.120.254.134

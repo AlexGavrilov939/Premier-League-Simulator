@@ -1,0 +1,87 @@
+---
+-   apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: 04EE7237B7D453EC
+
+-   apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: 648ACFD622F3D138
+
+-   name: Install dependencies
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - aptitude
+        - software-properties-common
+        - gnupg
+        - lsb-release
+        - gcc
+        - build-essential
+        - autoconf
+        - gettext
+        - autopoint
+      state: present
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+
+-   name: Add Docker’s official GPG key
+    apt_key:
+      url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+      state: present
+
+-   name: Verify fingerprint
+    apt_key:
+      id: 0EBFCD88
+      state: present
+
+-   name: Set up the repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release | lower }} stable
+      state: present
+      filename: docker
+
+-   name: Install Docker CE
+    apt:
+      name: docker-ce
+      state: present
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+    notify: Start docker on boot
+
+-   name: Verify that Docker CE is installed correctly by running the hello-world image
+    command: docker run hello-world
+    register: command_result
+    failed_when: "'Hello from Docker!' not in command_result.stdout"
+
+-   name: Remove useless dependencies
+    apt:
+      autoremove: yes
+
+-   name: Install Docker SDK dependencies
+    apt:
+      name:
+        - virtualenv
+        - python-setuptools
+        - python3-pip
+      state: present
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+
+-   name: Install Docker SDK for Python
+    pip:
+      executable: pip3
+      name:
+        - docker
+        - docker-compose
+        - passlib
+
+-   name: Remove periodic Docker prune
+    cron:
+      name: docker-prune
+      state: absent
+
+-   name: Remove useless packages
+    apt:
+      autoclean: yes

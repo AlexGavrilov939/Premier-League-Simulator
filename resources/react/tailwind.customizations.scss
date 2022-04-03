@@ -76,10 +76,6 @@
 @media (min-width: 640px) {
     .sm\:inline-table {
         display: inline-table;
-
-        //& > thead tr:not(:first-child) {
-        //    display: none;
-        //}
     }
 }
 .divide-green-500 > :not([hidden]) ~ :not([hidden]) {

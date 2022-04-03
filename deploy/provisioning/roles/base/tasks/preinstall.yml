@@ -1,0 +1,108 @@
+---
+# Set vm.swappiness to 5 in /etc/sysctl.conf
+- name: Set timezone
+  copy:
+    content: '{{ timezone | default("UTC") }}'
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Update Root user's Password
+  shell: "echo \"{{ ansible_user }}:{{ admin_password }}\" | chpasswd"
+
+- name: Remove existing localtime configuration file
+  file:
+    path: /etc/localtime
+    state: absent
+
+- name: Set localtime to UTC
+  file:
+    src: /usr/share/zoneinfo/{{ timezone | default("UTC") }}
+    dest: /etc/localtime
+    state: link
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Reconfigure tzdata
+  command: dpkg-reconfigure -f noninteractive tzdata
+
+- ansible.posix.sysctl:
+    name: net.ipv4.ip_local_port_range
+    value: '16384 60999'
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Set a hostname
+  hostname:
+    name: "{{ ansible_host }}"
+
+- name: Setup vim
+  copy:
+    src: files/.vimrc
+    dest: ~/.vimrc
+
+- name: Setup aliases
+  copy:
+    src: files/.bash_aliases
+    dest: ~/.bash_aliases
+
+- name: Creates icl log directory
+  file:
+    path: /var/log/icl
+    state: directory
+    #    group: www-data
+    # TODO fix it (host / docker permissions conflict - xfs group appears in container instead www-data)
+    mode: 0777
+
+- name: Increase limit nofile
+  community.general.pam_limits:
+    domain: '*'
+    limit_type: soft
+    limit_item: nofile
+    value: 65536
+    use_max: yes
+
+- name: Increase limit nofile
+  community.general.pam_limits:
+    domain: root
+    limit_type: soft
+    limit_item: nofile
+    value: 65536
+    use_max: yes
+
+- name: Increase limit nproc
+  community.general.pam_limits:
+    domain: '*'
+    limit_type: soft
+    limit_item: nproc
+    value: 65536
+    use_max: yes
+
+- name: Increase limit nproc
+  community.general.pam_limits:
+    domain: root
+    limit_type: soft
+    limit_item: nproc
+    value: 65536
+    use_max: yes
+
+- name: Disallow password authentication step 1
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    state: present
+
+- name: Disallow password authentication step 2
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    line: "PasswordAuthentication yes"
+    state: absent
+
+- name: Restart sshd
+  service:
+    name: ssh
+    state: restarted

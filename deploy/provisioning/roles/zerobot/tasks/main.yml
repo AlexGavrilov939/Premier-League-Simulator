@@ -1,0 +1,121 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - jq
+    state: latest
+    install_recommends: yes
+    update_cache: yes
+
+- name: Move zerobot script to /usr/local/bin
+  template:
+    src: files/zerobot
+    dest: /usr/local/bin
+    mode: '0775'
+
+-   name: Move zerobot_pipe script to /usr/local/bin
+    template:
+      src: files/zerobot_pipe
+      dest: /usr/local/bin
+      mode: '0775'
+
+-   name: Add zerobot pipe service
+    copy:
+      src: files/zerobot_pipe.service
+      dest: /etc/systemd/system/zerobot_pipe.service
+
+-   name: Remove zerobot_pipe if exists (could be a directory that will cause the error)
+    file:
+      state: absent
+      path: /var/run/zerobot_pipe
+
+-   name: Restart zerobot pipe service
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: zerobot_pipe
+      enabled: true
+
+-   name: Check if certificate already exists
+    stat:
+      path: /etc/zerossl/default/fullchain.pem
+    register: zerobot_certs
+
+-   name: Check if server is running
+    wait_for:
+      port: 80
+      timeout: 1
+    register: port_check
+    ignore_errors: yes
+    when: not zerobot_certs.stat.exists
+
+-   name: Up zerobot standalone Apache
+    shell: "docker run -d --name apache -v /var/www/html:/usr/local/apache2/htdocs/ -p 80:80 httpd:2.4"
+    when:
+      - not zerobot_certs.stat.exists
+      - port_check.failed == true
+
+-   name: Generate new certificates
+    shell: "echo {{ ( zerossl_domains + extra_ips | default([]) ) | unique | join(',') }} > /var/run/zerobot_pipe"
+    when: not zerobot_certs.stat.exists
+
+-   name: Wait until the zerobot is finished
+    wait_for:
+      path: /etc/zerossl/default
+      state: present
+      msg: Timeout to find folder /etc/zerossl/default
+      timeout: 30
+    ignore_errors: yes
+    register: zerobot_result
+
+-   name: Down zerobot Apache
+    shell: "docker rm -f apache"
+    when:
+      - not zerobot_certs.stat.exists
+      - port_check.failed == true
+
+-   name: Set flag
+    fail:
+      msg: Zerobot cert generation process failed :(
+    when: zerobot_result.failed
+
+-   name: Creates an entry like "SHELL=/bin/bash" on top of crontab
+    cron:
+      name: SHELL
+      env: yes
+      job: /bin/bash
+
+-   name: Creates an entry like "MAILTO=root" on top of crontab
+    cron:
+      name: MAILTO
+      env: yes
+      job: root
+
+-   name: Creates an entry like "PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin" on top of crontab
+    cron:
+      name: PATH
+      env: yes
+      job: /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+
+-   name: Move zerobot_cron_runner script to /usr/local/bin
+    template:
+      src: files/zerobot_cron_runner
+      dest: /usr/local/bin
+      mode: '0775'
+
+-   name: Add cronjob for zerobot_cron_runner
+    cron:
+      name: "zerobot_cron_runner"
+      hour: "1"
+      minute: "1"
+      job: "zerobot_cron_runner"
+
+-   name: Remove cronjob for zerobot renew certs (old version)
+    cron:
+      name: "zerobot renew"
+      state: absent
+
+-   name: Remove cronjob for certbot renew certs
+    cron:
+      name: "certbot renew"
+      state: absent

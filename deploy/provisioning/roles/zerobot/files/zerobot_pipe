@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+pipe=/var/run/zerobot_pipe
+[ -p "$pipe" ] || mkfifo -m 0777 "$pipe" || exit 1
+while read -r cmd; do
+  if [ "$cmd" ]; then
+      domainsStr=$cmd
+
+      # Generate new certs
+      zerobot "$domainsStr" 2>>/var/log/icl/zerobot_pipe_error.log 1>>/var/log/icl/zerobot_pipe_output.log
+      status=$?
+
+      if [ $status -eq 0 ]; then
+        # Restart nginx container
+        docker ps | grep 'icl-app' | awk '{print $1}' | xargs --no-run-if-empty docker restart
+      fi
+  fi
+done <"$pipe"
+exit

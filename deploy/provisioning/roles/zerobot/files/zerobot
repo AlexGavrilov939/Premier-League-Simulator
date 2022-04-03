@@ -1,0 +1,272 @@
+#!/bin/bash
+
+ZEROSSL_TOKEN='{{ zerossl_token }}'
+WEBROOT_PATH="/var/www/html/.well-known/pki-validation"
+CERTS_PATH_DEFAULT="/etc/zerossl/default"
+DOMAINS=$1
+RENEW_MODE='False'
+if [[ $DOMAINS = 'renew' ]]
+then
+  DOMAINS=$(cat "${CERTS_PATH_DEFAULT}/domains" 2>/dev/null)
+  RENEW_MODE='True'
+fi
+CERTS_PATH="/etc/zerossl/archive/$(echo "$DOMAINS" | md5sum | awk '{print $1}')"
+
+# Search certificate info by domain
+function searchCertificate
+{
+  log "Fetch certificates info"
+  log "Renew mode: ${RENEW_MODE}, Source: ${0}, Domains: ${DOMAINS}"
+  firstDomain=$(echo "$DOMAINS" | awk -F ',' '{print $1}')
+  additionalDomains=$(echo "$DOMAINS" | awk -F ',' '{for (i=2; i<NF; i++) printf $i","; print $NF}' | sed 's/,$//')
+
+  curl -s -X GET -G https://api.zerossl.com/certificates \
+	     -d access_key="$ZEROSSL_TOKEN" \
+ 	     -d search="$firstDomain" \
+ 	     -d certificate_status=draft,pending_validation,issued \
+	     -o "${CERTS_PATH}/certs_info.output"
+  # Post process certs_info.output to filter result $firstDomain equals
+  tmpFile=$(mktemp)
+  jq -c \
+     --arg firstDomain "$firstDomain"\
+     --arg additionalDomains "$additionalDomains"\
+     '.results |= map(select(.common_name==$firstDomain or .additional_domains==$additionalDomains))'\
+     "${CERTS_PATH}/certs_info.output" > "$tmpFile"
+
+  # Rewrite original output with filtered result
+  mv "$tmpFile" "${CERTS_PATH}/certs_info.output"
+
+  checkIsApiResponseSuccess "${CERTS_PATH}/certs_info.output"
+}
+
+# Generate new certs from scratch
+function generateNewCertificate
+{
+  log "Generate new certificate"
+
+  firstDomain=$(echo "$DOMAINS" | awk -F ',' '{print $1}')
+  additionalDomains=$(echo "$DOMAINS" | cut -d, -f 2- | tr ',' '\n' | sed -e 's/^/DNS:/; s/$//' | tr '\n' ',' | sed 's/,$//')
+
+  log "General domain: $firstDomain"
+  log "additional domains: $additionalDomains"
+  # Generate request.csr and privkey.pem (do not delete this file even when the certificates are ready)
+  openssl req -new -newkey rsa:2048 -nodes -out "${CERTS_PATH}/request.csr" \
+    -keyout "${CERTS_PATH}/privkey.pem" \
+    -subj "/C=US/ST=US-AL/L=Alabama/O=Croxy/OU=Proxy/CN=$firstDomain" \
+    -addext "subjectAltName=$additionalDomains" &>/dev/null
+
+  log "Prepare to post new certificates request"
+  curl -s -X POST https://api.zerossl.com/certificates?access_key="$ZEROSSL_TOKEN" \
+       --data-urlencode certificate_csr@"${CERTS_PATH}/request.csr" \
+       -d certificate_domains="$DOMAINS" \
+       -d certificate_validity_days=90 \
+       -o "${CERTS_PATH}/new_cert.output"
+
+  log "Prepare to check new_cert.out response"
+  checkIsApiResponseSuccess "${CERTS_PATH}/new_cert.output"
+}
+
+# Verify certs with HTTP_CSR_HASH validation method
+function verifyChallenge
+{
+  log "Verify challenge"
+
+  # Generate verification file and move it to WEBROOT_PATH
+  filename=$(jq -r '.validation.other_methods | to_entries[0].value.file_validation_url_http | split("/")[-1]' "${CERTS_PATH}/new_cert.output")
+  content=$(jq '.validation.other_methods | to_entries[0].value.file_validation_content | join("\n")' "${CERTS_PATH}/new_cert.output")
+
+  if [[ -z $filename ]]
+  then
+    echo "* Error! prepare domain verify failed:" >&2
+    exit 4
+  fi
+  mkdir -p $WEBROOT_PATH
+  echo -e "$content" | tr -d '"' > "${WEBROOT_PATH}/${filename}"
+
+  log verify_file_path="${WEBROOT_PATH}/${filename}"
+
+  # Try to pass verify challenge
+  curl -s -X POST "api.zerossl.com/certificates/${id}/challenges?access_key=${ZEROSSL_TOKEN}" \
+       -d validation_method=HTTP_CSR_HASH \
+	     -o "${CERTS_PATH}/challenge.output"
+
+  checkIsApiResponseSuccess "${CERTS_PATH}/challenge.output"
+}
+
+# Download certificate files
+function downloadCertificates
+{
+  result=$(curl -s -X GET "api.zerossl.com/certificates/${id}/download/return?access_key=${ZEROSSL_TOKEN}")
+  certificate=$(echo "$result" | jq '."certificate.crt"')
+  bundle=$(echo "$result" | jq '."ca_bundle.crt"')
+  if [[ -z $certificate || -z $bundle ]]
+  then
+    echo "* Error! certificate.crt or ca_bundle.crt not found" >&2
+    return 5
+  fi
+
+  echo -e "$certificate" | tr -d '"' > "${CERTS_PATH}/certificate.crt.tmp"
+  echo -e "$bundle" | tr -d '"' > "${CERTS_PATH}/ca_bundle.crt.tmp"
+
+  if ! grep -q "BEGIN CERTIFICATE" "${CERTS_PATH}/certificate.crt.tmp"
+  then
+    echo "* Error! ${CERTS_PATH}/certificate.crt.tmp is empty" >&2
+    return 6
+  fi
+  if ! grep -q "BEGIN CERTIFICATE" "${CERTS_PATH}/ca_bundle.crt.tmp"
+  then
+    echo "* Error! ${CERTS_PATH}/ca_bundle.crt.tmp is empty" >&2
+    return 7
+  fi
+
+  mv "${CERTS_PATH}/certificate.crt.tmp" "${CERTS_PATH}/certificate.crt"
+  mv "${CERTS_PATH}/ca_bundle.crt.tmp" "${CERTS_PATH}/ca_bundle.crt"
+
+  # Generate fullchain.pem and chain.pem
+  cat "${CERTS_PATH}/certificate.crt" "${CERTS_PATH}/ca_bundle.crt" > "${CERTS_PATH}/fullchain.pem"
+  cp "${CERTS_PATH}/certificate.crt" "${CERTS_PATH}/chain.pem"
+  chmod -R 644 "$CERTS_PATH"
+
+  # Create symlink to default
+  rm -f "$CERTS_PATH_DEFAULT"
+  ln -sfn "$CERTS_PATH" $CERTS_PATH_DEFAULT
+  log "Path $CERTS_PATH_DEFAULT created/updated"
+
+  return 0
+}
+
+# Clean up artifacts
+function cleanUp
+{
+  log "Run clean up"
+  find "$CERTS_PATH" -type f \( -name "*.crt" -o -name "*.output" -o -name ".csr" \) | xargs rm -f
+  rm -f "${WEBROOT_PATH}/*"
+}
+
+# Pretty log
+function log
+{
+  echo -e "\033[32m$(date -u)>>> $1\033[0m"
+}
+
+# Check that there is no error in the response output from the Zerossl API
+function checkIsApiResponseSuccess
+{
+  source=$1
+  error=$(jq -r '.error.type // "empty"' "$source")
+
+  if [[ $error != 'empty' ]]
+  then
+    echo "* Error! Request failed: ${error}" >&2
+    exit 8
+  fi
+
+}
+
+### Step 0. Make sure the working directory exists
+if [[ -z $DOMAINS ]]
+then
+  echo "* Error! Domains not found" >&2
+  exit 1
+fi
+
+mkdir -p "$CERTS_PATH"
+
+echo "$DOMAINS" > "${CERTS_PATH}/domains"
+
+### Step 1. Generate or fetch full cert info
+
+# Before starting to generate certificates, we check if there are already exist and fetch info if it so.
+# Such logic is necessary because there are some API problems with multiple same certificates in [issued] status
+searchCertificate
+
+status=$(jq -r '.results[0].status // "unknown"' "${CERTS_PATH}/certs_info.output")
+dateTodayWithOffset=$(date -d "now + 1 month" '+%Y-%m-%d %H:%M:%S' | tr -dc '[:alnum:]\n\r')
+dateExpiring=$(jq -r '.results[0].expires // "0"' "${CERTS_PATH}/certs_info.output" |  tr -dc '[:alnum:]\n\r')
+
+if [[ "$dateTodayWithOffset" -gt "$dateExpiring" ]]
+then
+  status="expiring_soon"
+fi
+
+if [[ $status =~ ^(unknown|expiring_soon)$ ]]
+then
+  generateNewCertificate
+else
+  # This privkey.pem file should have been created during the generateNewCertificate certificate (when we launched it for the first time)
+  if [[ ! -f ${CERTS_PATH}/privkey.pem ]]
+  then
+    echo "* Error! Private.key not found, please remove this cert from web icl and try recreate again" >&2
+    exit 2
+  fi
+  # Save cert info as if we just generated it
+  jq -c '.results[0]' "${CERTS_PATH}/certs_info.output" > "${CERTS_PATH}/new_cert.output"
+fi
+
+id=$(jq -r '.id // "0"' "${CERTS_PATH}/new_cert.output")
+status=$(jq -r '.status // "unknown"' "${CERTS_PATH}/new_cert.output")
+
+if [[ $id = '0' ]]
+then
+  echo "* Error! Certificate id not found" >&2
+  exit 3
+fi
+
+### Step 2. Verify domain if needed
+
+# If cert's just created it is in [draft] status and we need to go through the verification process
+if [[ $status = 'draft' ]]
+then
+  verifyChallenge
+  status=$(jq -r '.status // "error"' "${CERTS_PATH}/challenge.output")
+fi
+
+log "Certificate status is [${status}]"
+
+### Step 3. Download verified certificates
+
+if [[ $status = 'pending_validation' ]]
+then
+  log "Wait until certificate status will be issued"
+  sleep 10
+fi
+
+
+retries=10
+sleep=5
+isCompleted=0
+n=1
+
+log "Download certificate files with logic of retries: [${retries}]"
+
+until [ "$n" -gt $retries ]
+do
+  log ">> attempt: ${n}"
+  downloadCertificates
+  status=$?
+  log ">> return code: ${status}"
+
+  if [[ "$status" -eq 0 ]]
+  then
+    isCompleted=1
+    log ">> it's completed!"
+    break
+  fi
+
+  n=$((n+1))
+  log ">> waiting for ${sleep} seconds please..."
+  sleep $sleep
+done
+
+if [[ $isCompleted -ne 1 ]]
+then
+  echo "* Error! Return code: ${status}" >&2
+  exit 5
+fi
+
+
+### Step 4. Clean up
+
+cleanUp
+
+exit 0

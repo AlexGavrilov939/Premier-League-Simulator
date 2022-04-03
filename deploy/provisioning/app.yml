@@ -1,0 +1,15 @@
+---
+-   name: Provision manager
+    hosts: all
+    gather_facts: no
+    remote_user: root
+    vars_files:
+        - ../hosts/vars.yml
+    pre_tasks:
+        - setup:
+              gather_subset:
+                  - '!all'
+    roles:
+        - base
+        - docker
+        - zerobot

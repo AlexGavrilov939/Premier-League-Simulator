@@ -1,0 +1,10 @@
+---
+ansible_connection: ssh
+ansible_user: root
+ansible_port: 22
+ansible_ssh_private_key_file: ~/.ssh/icl_prod
+ansible_python_interpreter: /usr/bin/python3
+zerossl_token: '807ed8527af23d0a44d2e9b89dfea1d3'
+admin_email: 'alexgavrilov939@gmail.com'
+admin_password: '1122334455'
+timezone: "UTC"
