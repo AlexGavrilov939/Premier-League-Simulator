@@ -1,6 +1,6 @@
 ## Insider Premier League Simulator
 
-### DEMO: https://188.120.254.134
+### [DEMO](https://188.120.254.134)
 
 ### DEV environment configuration
 
