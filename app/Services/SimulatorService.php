@@ -89,14 +89,18 @@ class SimulatorService
     }
 
     /**
-     * @param \App\Models\GameModel $game
+     * @param GameModel $game
      */
     private function simulateGame(GameModel $game)
     {
-        $awayTeamPower = $game->awayTeam->power;
-        $homeTeamPower = $game->homeTeam->power;
-        $game->home_team_goals_num = rand(0, 10);
-        $game->away_team_goals_num = rand(0, 10);
+        /**
+         * @var $predictionService PredictionService
+         */
+        $predictionService = app(PredictionService::class);
+        $gameOutcome = $predictionService->predictGameOutcome($game->homeTeam, $game->awayTeam);
+
+        $game->home_team_goals_num = $gameOutcome['home_team_goals'];
+        $game->away_team_goals_num = $gameOutcome['away_team_goals'];
         $game->is_completed = true;
         $game->save();
     }

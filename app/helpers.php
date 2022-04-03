@@ -37,15 +37,23 @@ if (! function_exists('logs_path')) {
 
 if (! function_exists('weighted_random')) {
     /**
-     * Get the path to the logs folder.
-     * @param $min
-     * @param $max
-     * @param $gamma
-     * @return string
+     * @param array $values
+     * @param array $weights
+     * @return mixed
      */
-    function weighted_random($min, $max, $gamma): string
+    function weighted_random(array $values, array $weights): mixed
     {
-        $offset = $max - $min+1;
-        return floor($min + pow(lcg_value(), $gamma) * $offset);
+        $count = count($values);
+        $i = 0;
+        $n = 0;
+        $num = mt_rand(0, array_sum($weights));
+        while ($i < $count) {
+            $n += $weights[$i];
+            if ($n >= $num) {
+                break;
+            }
+            $i++;
+        }
+        return $values[$i];
     }
 }

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Collection;
 
 /**
  * @property integer $id
@@ -15,8 +14,8 @@ use Illuminate\Support\Collection;
  * @property integer $home_team_goals_num
  * @property integer $away_team_goals_num
  * @property boolean $is_completed
- * @property Collection<TeamModel> $homeTeam
- * @property Collection<TeamModel> $awayTeam
+ * @property TeamModel $homeTeam
+ * @property TeamModel $awayTeam
  */
 class GameModel extends Model
 {

@@ -44,7 +44,7 @@ class SimulatorController extends Controller
         $teams = $this->simulatorService->getTeams();
         $games = $this->simulatorService->getFixtures();
         $standings = $this->simulatorService->getStandings();
-        $predictions = $this->predictionService->predictWinners();
+        $predictions = $this->predictionService->predictStandingsOutcome();
 
         return response()->inertiaJson([
             'teams' => $teams,
@@ -96,7 +96,7 @@ class SimulatorController extends Controller
         return response()->inertiaJson([
             'games' => $games,
             'standings' => $standings,
-            'predictions' => $this->predictionService->predictWinners(),
+            'predictions' => $this->predictionService->predictStandingsOutcome(),
         ]);
     }
 
@@ -118,7 +118,7 @@ class SimulatorController extends Controller
         return response()->inertiaJson([
             'games' => $games,
             'standings' => $standings,
-            'predictions' => $this->predictionService->predictWinners()
+            'predictions' => $this->predictionService->predictStandingsOutcome()
         ]);
     }
 }

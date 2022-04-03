@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 /**
  * @property integer $id
  * @property integer $power
+ * @property StandingModel $standing
  */
 class TeamModel extends Model
 {
@@ -19,9 +20,11 @@ class TeamModel extends Model
      */
     protected $table = 'teams';
 
-    protected $guarded = [
+    protected $guarded = [];
 
-    ];
+    const HOME_GAME_INCREASE = 10;
+
+    const AWAY_GAME_DECREASE = 10;
 
     /**
      * @var string[]

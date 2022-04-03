@@ -4,13 +4,49 @@ namespace App\Services;
 
 use App\Models\GameModel;
 use App\Models\StandingModel;
+use App\Models\TeamModel;
 
 class PredictionService
 {
     /**
+     * @param TeamModel $homeTeam
+     * @param TeamModel $awayTeam
      * @return array
      */
-    public function predictWinners(): array
+    public function predictGameOutcome(TeamModel $homeTeam, TeamModel $awayTeam): array
+    {
+        $homeTeamPower = $homeTeam->power ?: 1;
+        $awayTeamPower = $awayTeam->power ?: 1;
+
+        // increase team power by 10% at home game
+        $homeTeamPower = $homeTeamPower / 100 * (100 + TeamModel::HOME_GAME_INCREASE);
+
+        // decrease team power by 10% at away game
+        $awayTeamPower = $awayTeamPower / 100 * (100 - TeamModel::AWAY_GAME_DECREASE);
+
+        // flip a coin with added weights and decide who will win the game
+        $winTeamPrediction = weighted_random([$homeTeam, $awayTeam], [$homeTeamPower, $awayTeamPower]);
+        $isHomeTeamWinner = $winTeamPrediction->id == $homeTeam->id;
+
+        // coefficient that I calculated empirically, with it the number of goals has a little more range
+        $goalsCoeff = 1.5;
+        // I guess that the smaller the difference in the strength of the teams, the fewer goals they can score against each other
+        $goalsMaxPrediction = (int)floor(abs($awayTeamPower - $homeTeamPower) / 10 * $goalsCoeff);
+        $goalsTeamX = rand(0, $goalsMaxPrediction);
+        $goalsTeamY = rand(0, $goalsMaxPrediction);
+        $winTeamGoalsCount = max($goalsTeamX, $goalsTeamY);
+        $loseTeamGoalsCount = min($goalsTeamX, $goalsTeamY);
+
+        return [
+            'home_team_goals' => $isHomeTeamWinner ? $winTeamGoalsCount: $loseTeamGoalsCount,
+            'away_team_goals' => $isHomeTeamWinner ? $loseTeamGoalsCount: $winTeamGoalsCount
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function predictStandingsOutcome(): array
     {
         if (! $this->checkIsPossibleToPredict()) {
             return [];
