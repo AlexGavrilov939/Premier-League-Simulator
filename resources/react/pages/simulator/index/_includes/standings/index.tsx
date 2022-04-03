@@ -19,7 +19,7 @@ const SimulatorStandings: React.FC<SimulatorSimulationType> = ({
       <StandingsTable standings={standings} classNames={'w-7/12'} />
       {predictions.length > 0 && <PredictionTable predictions={predictions} classNames={'w-4/12'} />}
     </div>
-    <div className={'flex flex-wrap justify-between gap-y-3'}>
+    <div className={'flex flex-wrap justify-between'}>
       {games.map((gameData, weekNum) => (
         <>
           <WeekGames

@@ -37,7 +37,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('fetchSimulationData_nextData', nextData);
 
     return nextData;
   };
@@ -54,8 +53,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('=data_before', data);
-    console.log('generateFixturesHandler_nextData', nextData);
     setData(nextData);
     setLoading(false);
   }, [data, setData]);
@@ -72,8 +69,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('before_data', data);
-    console.log('resetDataHandler_nextData', nextData);
     setData(nextData);
     setLoading(false);
   }, [data, setData]);
@@ -90,8 +85,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('=data_before', data);
-    console.log('generateFixturesHandler_nextData', nextData);
     setData(nextData);
     setLoading(false);
   }, [data, setData]);
@@ -112,8 +105,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('=data_before', data);
-    console.log('generateFixturesHandler_nextData', nextData);
     setData(nextData);
     // setLoading(false);
   }, [data, setData]);
@@ -136,8 +127,6 @@ const Index: React.FC<IndexPageType> = ({
     } catch (error: any) {
       console.error(error);
     }
-    console.log('=data_before', data);
-    console.log('simulateAllWeeksHandler_nextData', nextData);
     setData(nextData);
     // setLoading(false);
   }, [data, setData]);
@@ -185,33 +174,39 @@ const Index: React.FC<IndexPageType> = ({
           </LeagueContent>
         </div>
         <div className='flex justify-between mt-3'>
-          <div className={'flex gap-3'}>
+          <div className={'flex'}>
             {currentSimulationStep == SimulationStepEnum.TEAMS && <Button
+              className={'mx-1'}
               onClick={regenerateFixturesHandler}>
               Generate fixtures
             </Button>}
             {currentSimulationStep == SimulationStepEnum.FIXTURES && <Button
+              className={'mx-1'}
               onClick={generateStandingsHandler}>
                 Start simulation
             </Button>}
             {currentSimulationStep == SimulationStepEnum.STANDINGS && <Button
+              className={'mx-1'}
               onClick={() => simulateWeekGamesHandler()}>
                 Simulate all weeks
             </Button>}
           </div>
-          <div className={'flex gap-3'}>
+          <div className={'flex'}>
             {currentSimulationStep == SimulationStepEnum.FIXTURES && <Button
               onClick={regenerateFixturesHandler}
+              className={'mx-1'}
               behaviorType={ButtonBehaviorTypeEnum.ERROR}>
                 Reset fixtures
             </Button>}
             {currentSimulationStep == SimulationStepEnum.STANDINGS && <Button
               behaviorType={ButtonBehaviorTypeEnum.ERROR}
+              className={'mx-1'}
               onClick={resetStandingsHandler}>
                 Reset standings
             </Button>}
             {currentSimulationStep != SimulationStepEnum.TEAMS && <Button
               behaviorType={ButtonBehaviorTypeEnum.ERROR}
+              className={'mx-1'}
               onClick={resetDataHandler}>
                 Reset data
             </Button>}

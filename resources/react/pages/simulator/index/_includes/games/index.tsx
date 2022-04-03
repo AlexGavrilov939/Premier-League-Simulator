@@ -9,7 +9,7 @@ type SimulatorGamesType = {
 const SimulatorGames: React.FC<SimulatorGamesType> = ({
   games,
 }) => (
-  <div className={'flex flex-wrap justify-between gap-y-3'}>
+  <div className={'flex flex-wrap justify-between'}>
     {games.map((weekData, weekNum) => (
       <WeekGames key={weekNum} weekData={weekData} />
     ))}

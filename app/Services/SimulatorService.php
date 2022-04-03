@@ -79,9 +79,10 @@ class SimulatorService
     {
         $gamesQuery = GameModel::query();
         if ($weekNum) {
-            $gamesQuery->where(['week_num' => $weekNum]);
+            $gamesQuery
+                ->where(['week_num' => $weekNum]);
         }
-        $games = $gamesQuery->get();
+        $games = $gamesQuery->where(['is_completed' => false])->get();
         foreach ($games as $game) {
             $this->simulateGame($game);
             $this->recalculateStandings($game);

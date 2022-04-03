@@ -20,7 +20,7 @@ const WeekGames: React.FC<WeekGamesType> = ({
   mode= SimulationStepEnum.FIXTURES,
   simulateGameHandler = () => {},
 }) => (
-  <div key={weekData.week_num} className={cx('rounded-lg overflow-hidden bg-indigo-100 shadow-sm', styles.container)}>
+  <div key={weekData.week_num} className={cx('rounded-lg overflow-hidden bg-indigo-100 shadow-sm mt-2', styles.container)}>
     <div className={'flex justify-between items-center bg-indigo-900 px-2 sm:px-3 py-1 sm:py-2 h-9 lg:h-10'}>
       <span className='text-white text-xs lg:text-sm font-bold'>Week: {weekData.week_num}</span>
       {mode === SimulationStepEnum.STANDINGS && ! weekData.is_completed && <PlayIcon
@@ -37,11 +37,11 @@ const WeekGames: React.FC<WeekGamesType> = ({
           <HomeIcon className='w-4 h-4 lg:w-5 lg:h-5 mr-1 mb-0.5'/>
           <span className='text-sm lg:text-base font-semibold'>{item.home.title}</span>
         </div>
-        <div className={'flex items-center gap-1 font-bold'}>
+        <div className={'flex items-center font-bold'}>
           {weekData.is_completed && <>
-            <div className={'w-4 text-center text-sm lg:text-base'}>{item.home.goals}</div>
+            <div className={'w-4 text-center text-sm lg:text-base mr-0.5'}>{item.home.goals}</div>
             &ndash;
-            <div className={'w-4 text-center text-sm lg:text-base'}>{item.away.goals}</div>
+            <div className={'w-4 text-center text-sm lg:text-base ml-0.5'}>{item.away.goals}</div>
           </>}
           {! weekData.is_completed && <>&ndash;</>}
         </div>

@@ -17,10 +17,10 @@ const Footer: React.FC<FooterType> = ({ classNames }) => (
     )}>
       <div className="flex items-center divide-x-2 divide-solid divide-opacity-30 divide-white">
         <span className={'pr-3 text-sm sm:text-sm text-white'}>&copy;&nbsp;2022&nbsp;Alex Gavrilov</span>
-        <div className={'pl-3 flex items-center gap-3'}>
+        <div className={'pl-3 flex items-center'}>
           <a
             href={linkedInLink}
-            className='block cursor-pointer hover:opacity-80'
+            className='block cursor-pointer hover:opacity-80 mr-2'
             target='_blank'
             rel="noreferrer"
           >
