@@ -24,6 +24,7 @@ env > "/tmp/initial_$composeFile"
 set -o allexport && source .env && set +o allexport
 env > "/tmp/updated_$composeFile"
 comm -23 <(sort "/tmp/initial_$composeFile") <(sort "/tmp/updated_$composeFile") > "/tmp/diff_$composeFile"
+# shellcheck disable=SC1090
 set -o allexport && source "/tmp/diff_$composeFile" && set +o allexport
 envsubst < "$composeFile" > "/tmp/$composeFile"
 

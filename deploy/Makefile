@@ -54,8 +54,11 @@ show-tags:
 
 ######################################################## DEPLOY ########################################################
 
-deploy:
+--deploy-single:
 	./scripts/deploy_single.sh "${HOST}" "${IMAGE_TAG}" "${COMPOSE_FILE}"
+
+deploy:
+	./scripts/deploy.sh "${HOST}" "${IMAGE_TAG}"
 	@echo "* OK"
 
 

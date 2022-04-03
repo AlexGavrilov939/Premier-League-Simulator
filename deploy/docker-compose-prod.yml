@@ -6,7 +6,6 @@ networks:
 volumes:
     app:
     appStorage:
-    redisStorage:
     sockets:
 
 services:
