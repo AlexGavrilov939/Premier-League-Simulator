@@ -4,9 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTeamsTable extends Migration
+class StandingsAddFk extends Migration
 {
-    const TABLE = 'teams';
+    const TABLE = 'standings';
 
     /**
      * Run the migrations.
@@ -15,12 +15,12 @@ class CreateTeamsTable extends Migration
      */
     public function up()
     {
-        Schema::create(self::TABLE, function (Blueprint $table) {
-            $table->id();
-            $table->string('title', 200);
-            $table->string('uid', 30);
-            $table->unsignedInteger('power')->default(0);
-            $table->timestamps();
+        Schema::table(self::TABLE, function (Blueprint $table) {
+            $table->foreign('team_id')
+                ->references('id')
+                ->on('teams')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
         });
     }
 
@@ -31,6 +31,6 @@ class CreateTeamsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('teams');
+        //
     }
 }

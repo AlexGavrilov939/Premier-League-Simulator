@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateStandingsTable extends Migration
 {
+    const TABLE = 'standings';
+
     /**
      * Run the migrations.
      *
@@ -13,7 +15,7 @@ class CreateStandingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('standings', function (Blueprint $table) {
+        Schema::create(self::TABLE, function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('team_id');
             $table->unsignedInteger('points')->default(0);

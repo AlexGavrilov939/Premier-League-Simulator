@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateGamesTable extends Migration
 {
+    const TABLE = 'games';
+
     /**
      * Run the migrations.
      *
@@ -13,7 +15,7 @@ class CreateGamesTable extends Migration
      */
     public function up()
     {
-        Schema::create('games', function (Blueprint $table) {
+        Schema::create(self::TABLE, function (Blueprint $table) {
             $table->id();
             $table->integer('week_num');
             $table->unsignedBigInteger('home_team_id');
